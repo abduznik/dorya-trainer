@@ -54,9 +54,7 @@ export class InputManager {
     window.addEventListener('keyup', (e) => this.keysDown.delete(e.code));
     window.addEventListener('blur', () => this.keysDown.clear());
 
-    window.addEventListener('gamepadconnected', (e) => {
-      if (this.padIndex === null) { this.padIndex = e.gamepad.index; this.padName = e.gamepad.id; }
-    });
+    // selection happens in getGamepad() so non-controller HID devices are never picked
     window.addEventListener('gamepaddisconnected', (e) => {
       if (e.gamepad.index === this.padIndex) { this.padIndex = null; this.padName = ''; this.prevPad = []; }
     });
@@ -98,11 +96,25 @@ export class InputManager {
     if (actions.length) this.lastSource = 'keyboard';
   }
 
+  // Pick a real controller. Headsets, wheels and macro keypads also show up as
+  // "gamepads" (e.g. a Corsair headset receiver: 7 buttons, no axes), so only
+  // standard-mapped pads or devices with sticks and enough buttons qualify, and
+  // whichever qualifying pad the player actually touches becomes the active one.
   getGamepad() {
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    if (this.padIndex !== null && pads[this.padIndex]) return pads[this.padIndex];
-    for (const p of pads) if (p && p.connected) { this.padIndex = p.index; this.padName = p.id; return p; }
-    return null;
+    const pads = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter((p) => p && p.connected);
+    const usable = pads.filter((p) => p.mapping === 'standard' || (p.axes.length >= 2 && p.buttons.length >= 8));
+    for (const p of usable) {
+      if (p.index === this.padIndex) continue;
+      const active = p.buttons.some((b) => b.pressed) || p.axes.slice(0, 2).some((a) => Math.abs(a) > 0.5);
+      if (active) { this.padIndex = p.index; this.padName = p.id; this.prevPad = []; }
+    }
+    let cur = usable.find((p) => p.index === this.padIndex);
+    if (!cur) {
+      cur = usable.sort((a, b) => ((b.mapping === 'standard') - (a.mapping === 'standard')) || (b.buttons.length - a.buttons.length))[0] || null;
+      if (cur) { this.padIndex = cur.index; this.padName = cur.id; this.prevPad = []; }
+      else { this.padIndex = null; this.padName = ''; }
+    }
+    return cur;
   }
 
   sample() {
