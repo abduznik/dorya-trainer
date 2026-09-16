@@ -39,7 +39,45 @@ Goal: match Tekken's rules closely enough that habits transfer 1:1.
 - [ ] Character variants: Kazuya, Heihachi, Devil Jin, Reina inputs and startup differences (e.g. Reina's electric, Heihachi's ws-electric).
 - [ ] Stage walls and wall splat for wall-carry practice.
 
-## Milestone 4 – Platform and community
+## Milestone 4 – Generic motion engine (prerequisite for anything beyond the electric)
+
+Goal: the detector becomes data, not code, so a new move or a new game is a spec file, not a rewrite.
+
+Sequencing matters here: do this *before* adding other characters or games, otherwise every new
+execution drags EWGF assumptions deeper into the code.
+
+- [ ] Motion grammar: describe a move as a list of steps (direction sets, button sets, "same frame as"
+      constraints, min/max frames between steps, hold durations, charge times, neutral requirements).
+      EWGF, PEWGF, wavedash and KBD must be re-expressed in the grammar with zero behaviour change,
+      verified by the existing headless tests.
+- [ ] Multi-button and simultaneous-press handling (1+2, 3+4, plinks) with a configurable plink window.
+- [ ] Charge inputs (hold b for N frames, then f+button) and charge partitioning.
+- [ ] Per-move result classes beyond electric / regular / fail: e.g. "came out but not the just-frame
+      version", "buffered too early", "dropped the charge".
+- [ ] Generic feedback: the frame-offset histogram, timeline strip and drills work for any move in the
+      grammar, not just button 2 relative to d/f.
+- [ ] Move library format (JSON) with a game, character, notation style (numpad vs Tekken), and a
+      "reference" section (source links, startup frames) shown in Help.
+
+## Milestone 5 – Beyond the electric
+
+Goal: other addictive hard executions, in the same drill-and-histogram loop. Ordered by how much of
+the existing Tekken setup they reuse.
+
+1. Tekken, same character: instant while-standing (iWS), DEWGF / f,n,d,d/f+2 from crouch dash cancel
+   variants, Heihachi EWGF and electric wind hook fist, Devil Jin and Reina electrics.
+2. Tekken, other characters: Hwoarang JFSR, Bryan taunt jet upper (just frame taunt), Lee just-frame
+   slide, Steve's b+1 cancels. Needs per-character move specs and a neutral "dummy" reaction set.
+3. Other games, motion-based: Street Fighter (charge partitioning, Guile / Balrog, Zangief 720),
+   KOF (hyper-hop and short-hop timing, super motions), Guilty Gear (Dragon Install, Roman cancel
+   timing). These need only the motion engine plus a 2D input display; no ragdoll changes.
+4. Other games, timing-based: Smash (perfect wavedash, L-cancel), Melee-style frame-perfect inputs,
+   using the same histogram feedback with a frame-window slider.
+
+Each new game ships as a move-library file plus, where needed, a display preset (numpad notation,
+button colours), so the app can present a "game select" on the start screen.
+
+## Milestone 6 – Platform and community
 
 Goal: easy to install, easy to share, easy to contribute to.
 
@@ -49,6 +87,14 @@ Goal: easy to install, easy to share, easy to contribute to.
 - [ ] Localisation: JP, KR, ES, FR, DE strings.
 - [ ] Accessibility: colour-blind safe result palette, reduced-motion mode, screen-reader labels.
 - [ ] Contributor guide, issue templates, unit tests for the detector and movement in CI.
+
+## Suggested order
+
+1. M1 feel and feedback (small, high value, no architecture risk).
+2. M4 generic motion engine (the refactor everything after depends on).
+3. M5 beyond the electric, starting with the Tekken-native items since they reuse the ragdolls.
+4. M2 practice modes (drill editor is far more useful once there is more than one move).
+5. M3 authenticity and M6 platform in parallel as capacity allows.
 
 ## Ideas parking lot
 
