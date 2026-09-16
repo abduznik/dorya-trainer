@@ -205,8 +205,16 @@ export class ActiveRagdoll {
 
   get x() { return this.bodies.hips.position.x; }
   get y() { return this.bodies.hips.position.y; }
-  get down() { return this.limp > 0; }
-  get busy() { return !!this.attack || this.stun > 0 || this.limp > 0; }
+  get down() { return this.limp > 0 || !!this.juggle; }
+  get busy() { return !!this.attack || this.stun > 0 || this.limp > 0 || !!this.juggle; }
+
+  // Tekken-style juggle: the launched body floats on its back, feet toward the attacker,
+  // on a slow analytic arc; each hit bumps it up and pushes it back, until it lands.
+  startJuggle(dirX, vy) {
+    this.juggle = { y: Math.max(this.y, 0.95), vy, vx: dirX * 1.4, dirX, hits: 1 };
+    this.limp = 0; this.attack = null; this.stun = 0;
+    this.flash(0.15);
+  }
 
   fistPosition(limb, out = new THREE.Vector3()) {
     const b = this.bodies[limb];
@@ -226,7 +234,7 @@ export class ActiveRagdoll {
       b.velocity.setZero(); b.angularVelocity.setZero();
       b.force.setZero(); b.torque.setZero();
     }
-    this.limp = 0; this.weak = 1; this.weakTimer = 0; this.stun = 0; this.attack = null;
+    this.limp = 0; this.weak = 1; this.weakTimer = 0; this.stun = 0; this.attack = null; this.juggle = null;
     this.crouch = 0; this.lean = 0; this.vTarget = 0; this.anchorX = x;
   }
 
@@ -242,6 +250,16 @@ export class ActiveRagdoll {
   // called by the game when one of this fighter's attacks connects / is blocked
   takeHit(def, dirX, blocked, attackerName) {
     const vx = def.kb[0] * dirX, vy = def.kb[1];
+    if (this.juggle) {
+      // juggle hit: a bump up and a push away, more for launchers
+      const j = this.juggle;
+      j.vy = Math.max(j.vy, 0) + (def.heavy ? 2.8 : 1.5);
+      j.vx = dirX * (def.heavy ? 1.8 : 1.0);
+      j.dirX = dirX;
+      j.hits++;
+      this.flash();
+      return 'juggle';
+    }
     if (this.limp > 0) {
       this.impulseAll(vx * 0.8, vy * 0.9, 0);
       this.limp = Math.max(this.limp, 1.2);
@@ -257,9 +275,7 @@ export class ActiveRagdoll {
     this.attack = null;
     this.flash();
     if (def.heavy) {
-      this.impulseAll(vx, vy, 0);
-      this.bodies.chest.angularVelocity.z += -3 * dirX;
-      this.limp = 1.5;
+      this.startJuggle(dirX, vy * 0.62);
       return 'launch';
     }
     this.impulseAll(vx * 0.5, vy * 0.3, 0);
@@ -286,6 +302,19 @@ export class ActiveRagdoll {
 
   tick() {
     if (this.stun > 0) this.stun--;
+    if (this.juggle) {
+      const j = this.juggle, dt = 1 / 60;
+      j.vy -= 6.5 * dt;               // floaty gravity, like a Tekken juggle
+      j.y += j.vy * dt;
+      j.vx *= 0.94;
+      if (j.y < 0.5 && j.vy < 0) {
+        // lands: goes limp on the floor for a moment, then gets back up
+        this.juggle = null;
+        this.limp = 1.1;
+        this.impulseAll(j.vx * 0.5, -1.0, 0);
+        this.emit('juggleEnd', j.hits);
+      }
+    }
     if (this.weakTimer > 0) { this.weakTimer--; if (this.weakTimer === 0) this.weak = 1; }
     if (this.attack) {
       const a = this.attack;
@@ -362,6 +391,19 @@ export class ActiveRagdoll {
       T.rUpper = eulerQ(0.9, -0.1, 0); T.rFore = eulerQ(2.1, 0, 0);
     }
 
+    if (this.juggle) {
+      // floating on the back: legs out toward the attacker, arms flung out, head back
+      T.chest = eulerQ(0.15, 0, 0);
+      T.head = eulerQ(-0.35, 0, 0);
+      T.lUpper = eulerQ(0.4, 1.1, 0); T.rUpper = eulerQ(0.4, -1.1, 0);
+      T.lFore = eulerQ(0.5, 0, 0); T.rFore = eulerQ(0.5, 0, 0);
+      T.lThigh = eulerQ(0.25, 0.15, 0); T.rThigh = eulerQ(0.1, -0.15, 0);
+      T.lShin = eulerQ(-0.35, 0, 0); T.rShin = eulerQ(-0.25, 0, 0);
+      this.hoverHeight = this.juggle.y;
+      this.motorLimbs = null;
+      return;
+    }
+
     const a = this.attack;
     this.motorLimbs = null;
     if (a) {
@@ -429,7 +471,10 @@ export class ActiveRagdoll {
       v.y += (vyT - v.y) * 0.7 * b;
       const lunging = this.attack && (this.attack.name === 'wgf' || this.attack.name === 'ewgf') && this.attack.f < 20;
       if (this.anchorX === undefined || lunging || this.weak < 1) this.anchorX = hips.position.x;
-      if (lunging) {
+      if (this.juggle) {
+        v.x += (this.juggle.vx - v.x) * 0.4;
+        this.anchorX = hips.position.x;
+      } else if (lunging) {
         // wind god fist step: a short, fixed push for the first 10 frames, then hold
         const step = this.attack.f < 10 ? 2.2 * this.facing : 0;
         v.x += (step - v.x) * 0.55;
@@ -449,9 +494,13 @@ export class ActiveRagdoll {
       cv.z += (v.z - cv.z) * 0.2 * b;
 
       const yaw = new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(0, 1, 0), this.facing > 0 ? 0 : Math.PI);
-      const hipsTarget = yaw.mult(eulerQ(-(0.1 * this.crouch + 0.15 * this.lean), 0, 0));
+      // juggling: lie flat on the back with the feet toward the attacker (local -Y swings to local +X,
+      // which is the direction this character faces, i.e. toward whoever launched it)
+      const hipsTarget = this.juggle
+        ? yaw.mult(eulerQ(Math.PI / 2 - 0.15, 0, 0))
+        : yaw.mult(eulerQ(-(0.1 * this.crouch + 0.15 * this.lean), 0, 0));
       this.motorTo(hips, hipsTarget, 26, 0.7 * b);
-      const chestTarget = yaw.mult(this.targets.chest);
+      const chestTarget = (this.juggle ? hipsTarget : yaw).mult(this.targets.chest);
       this.motorTo(this.bodies.chest, chestTarget, 20, 0.5 * b);
     }
 

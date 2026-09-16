@@ -49,6 +49,16 @@ const DRILLS = {
 };
 let mode = 'menu';
 let electricPending = false;
+let combo = 0;
+let comboTimer = null;
+function showCombo(n, final) {
+  const el = $('combo');
+  el.textContent = final ? `${n} HIT COMBO` : `${n} HIT${n > 1 ? 'S' : ''}`;
+  el.classList.toggle('final', !!final);
+  el.classList.add('show');
+  clearTimeout(comboTimer);
+  if (final) comboTimer = setTimeout(() => el.classList.remove('show'), 1400);
+}
 
 // put both fighters back on their marks, honouring the "player side" setting
 function resetPositions() {
@@ -155,6 +165,8 @@ player.on('wgfStart', (name) => {
   }, 90);
 });
 
+dummy.on('juggleEnd', (hits) => { if (combo > 0) showCombo(Math.max(combo, hits), true); combo = 0; });
+
 // mirror numpad directions so 6 is always "toward the dummy"
 const MIRROR = { 1: 3, 2: 2, 3: 1, 4: 6, 5: 5, 6: 4, 7: 9, 8: 8, 9: 7 };
 
@@ -229,6 +241,8 @@ function simTick() {
     if (hit) {
       a.hitDone = true;
       const kind = dummy.takeHit(a.def, player.facing, false, a.name);
+      if (kind === 'launch') { combo = 1; showCombo(combo); }
+      else if (kind === 'juggle') { combo++; showCombo(combo); }
       if (a.def.electric) {
         fx.burst(tmp.set(dummy.bodies.chest.position.x, dummy.bodies.chest.position.y + 0.1, 0), electricKind === 'PEWGF' ? 2.2 : 1.7, paletteFor());
         view.shake(electricKind === 'PEWGF' ? 0.18 : 0.14);
