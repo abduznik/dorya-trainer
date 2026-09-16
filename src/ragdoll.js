@@ -254,7 +254,7 @@ export class ActiveRagdoll {
       // juggle hit: a bump up and a push away, more for launchers
       const j = this.juggle;
       j.vy = Math.max(j.vy, 0) + (def.heavy ? 3.6 : 2.0);
-      j.vx = dirX * (def.heavy ? 2.6 : 1.5);
+      j.vx = dirX * (def.heavy ? 3.8 : 2.4);
       j.dirX = dirX;
       j.hits++;
       this.flash();
@@ -306,7 +306,7 @@ export class ActiveRagdoll {
       const j = this.juggle, dt = 1 / 60;
       j.vy -= 9.5 * dt;               // juggle gravity: quicker than the first version, still floaty
       j.y += j.vy * dt;
-      j.vx *= 0.955;
+      j.vx *= 0.965;
       if (j.y < 0.5 && j.vy < 0) {
         // lands: goes limp on the floor for a moment, then gets back up
         this.juggle = null;

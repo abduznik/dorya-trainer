@@ -272,6 +272,10 @@ function simTick() {
   if (!dummy.down && !player.down) {
     const gap = (dummy.x - player.x) * player.facing;
     if (gap < 0.7 && gap > -0.7) dummy.anchorX += (0.7 - gap) * player.facing * 0.5;
+  } else if (dummy.juggle) {
+    // air pushbox: a juggled opponent is always kept ahead of the player
+    const gap = (dummy.x - player.x) * player.facing;
+    if (gap < 0.9) dummy.juggle.vx = player.facing * Math.max(Math.abs(dummy.juggle.vx), (0.9 - gap) * 8);
   }
 
   // dummy housekeeping: bring it back in front when it wandered off
