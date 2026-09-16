@@ -211,7 +211,7 @@ export class ActiveRagdoll {
   // Tekken-style juggle: the launched body floats on its back, feet toward the attacker,
   // on a slow analytic arc; each hit bumps it up and pushes it back, until it lands.
   startJuggle(dirX, vy) {
-    this.juggle = { y: Math.max(this.y, 0.95), vy, vx: dirX * 1.4, dirX, hits: 1 };
+    this.juggle = { y: Math.max(this.y, 0.95), vy, vx: dirX * 3.2, dirX, hits: 1 };
     this.limp = 0; this.attack = null; this.stun = 0;
     this.flash(0.15);
   }
@@ -253,8 +253,8 @@ export class ActiveRagdoll {
     if (this.juggle) {
       // juggle hit: a bump up and a push away, more for launchers
       const j = this.juggle;
-      j.vy = Math.max(j.vy, 0) + (def.heavy ? 2.8 : 1.5);
-      j.vx = dirX * (def.heavy ? 1.8 : 1.0);
+      j.vy = Math.max(j.vy, 0) + (def.heavy ? 3.6 : 2.0);
+      j.vx = dirX * (def.heavy ? 2.6 : 1.5);
       j.dirX = dirX;
       j.hits++;
       this.flash();
@@ -275,7 +275,7 @@ export class ActiveRagdoll {
     this.attack = null;
     this.flash();
     if (def.heavy) {
-      this.startJuggle(dirX, vy * 0.62);
+      this.startJuggle(dirX, vy * 0.85);
       return 'launch';
     }
     this.impulseAll(vx * 0.5, vy * 0.3, 0);
@@ -304,9 +304,9 @@ export class ActiveRagdoll {
     if (this.stun > 0) this.stun--;
     if (this.juggle) {
       const j = this.juggle, dt = 1 / 60;
-      j.vy -= 6.5 * dt;               // floaty gravity, like a Tekken juggle
+      j.vy -= 9.5 * dt;               // juggle gravity: quicker than the first version, still floaty
       j.y += j.vy * dt;
-      j.vx *= 0.94;
+      j.vx *= 0.955;
       if (j.y < 0.5 && j.vy < 0) {
         // lands: goes limp on the floor for a moment, then gets back up
         this.juggle = null;
