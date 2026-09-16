@@ -419,7 +419,13 @@ export class ActiveRagdoll {
       // ordinary torque-driven physics.
       const b = Math.min(1, strength);
       const v = hips.velocity;
-      const vyT = (this.hoverHeight - hips.position.y) * 22;
+      // never let a foot go under the floor: raise the hover target by the deepest penetration
+      let sink = 0;
+      for (const n of ['lShin', 'rShin']) {
+        const fy = this.bodies[n].pointToWorldFrame(new CANNON.Vec3(0.05, -0.29, 0)).y;
+        if (fy < sink) sink = fy;
+      }
+      const vyT = (this.hoverHeight - sink - hips.position.y) * 22;
       v.y += (vyT - v.y) * 0.7 * b;
       const lunging = this.attack && (this.attack.name === 'wgf' || this.attack.name === 'ewgf') && this.attack.f < 20;
       if (this.anchorX === undefined || lunging || this.weak < 1) this.anchorX = hips.position.x;
