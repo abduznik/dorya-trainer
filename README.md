@@ -2,11 +2,27 @@
 
 # Dorya Trainer
 
-**Play it: https://abduznik.github.io/dorya-trainer/**
+**Play it now: https://abduznik.github.io/dorya-trainer/** (free, no install, keyboard or controller)
 
-A just-frame trainer for the **Electric Wind God Fist** (f, n, d, d/f+2), built with
-Three.js, cannon-es and Vite. Runs in any browser and exports to a static folder,
-Electron, or Tauri.
+Dorya Trainer is a browser-based **Electric Wind God Fist trainer** for Tekken players. It teaches the
+Mishima **EWGF** (f, n, d, d/f+2) and the **Perfect Electric / PEWGF** (f, n, d/f+2) by sampling your
+inputs at a true 60 Hz and telling you, to the frame, whether button 2 landed on the d/f frame. Built
+with Three.js, cannon-es and Vite; exports to a static folder, Electron or Tauri.
+
+## What it is for
+
+- Learning the **just frame**: the electric only comes out when 2 is pressed on the exact frame the
+  stick reaches d/f. The trainer shows the offset in frames on every attempt, plus a histogram of
+  where your presses land, so you can see whether you are early, late, or drifting.
+- Drilling **Mishima movement**: crouch dash, wavedash (f, n, d, d/f, f, n, d, d/f…), f,f dash,
+  b,b backdash and the **Korean backdash** cancel (b, b, d/b), all on an endless stage.
+- **Timed drills**: ten electrics in a row, wavedash ×3 into electric, Korean backdash ×8, with best
+  times saved per drill.
+- Practising on **keyboard, pad, stick or leverless**: every input is rebindable, directions come from
+  d-pad or stick with 45° gates, and the on-screen input display works like the one in Tekken.
+
+It is not an emulator or a mod: it is a standalone practice tool that reproduces the input rules for
+the electric so you can grind the motion anywhere, on any machine with a browser.
 
 ## Run
 
@@ -64,6 +80,12 @@ npm run dist:win                     # portable build in release/
 ```
 
 Optional: drop a `public/sfx/dorya.mp3` into the project and it plays on every electric.
+
+## Keywords
+
+Tekken, Tekken 8, Tekken 7, electric wind god fist, EWGF, PEWGF, perfect electric, Kazuya Mishima,
+Heihachi, Devil Jin, Reina, wavedash, Korean backdash, KBD, just frame, input trainer, fighting game
+practice, FGC, dorya.
 
 ## Layout
 

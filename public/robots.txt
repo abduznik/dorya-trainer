@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://abduznik.github.io/dorya-trainer/sitemap.xml
