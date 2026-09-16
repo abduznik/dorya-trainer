@@ -292,7 +292,7 @@ export class ActiveRagdoll {
       a.f++;
       if ((a.name === 'wgf' || a.name === 'ewgf') && a.f === 4) {
         // the lunge: hop forward and up
-        this.impulseAll(3.4 * this.facing, 2.6, 0);
+        this.impulseAll(1.6 * this.facing, 2.2, 0); // short step forward; the reach comes from the hitbox
       }
       if (a.f >= a.def.total) this.attack = null;
     }

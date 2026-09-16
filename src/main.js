@@ -216,10 +216,15 @@ function simTick() {
   const a = player.attack;
   if (a && !a.hitDone && a.f >= a.def.active[0] && a.f <= a.def.active[1]) {
     player.fistPosition(a.def.limb, tmp);
+    // hit volume: a sphere around the fist, stretched forward for the wind god fist so
+    // it has Tekken-like reach without the character lunging across the stage
+    const r = 0.62, ahead = a.def.heavy ? 0.9 : 0;
     let hit = false;
     for (const part of ['chest', 'head', 'hips']) {
       const p = dummy.bodies[part].position;
-      if (Math.hypot(tmp.x - p.x, tmp.y - p.y, tmp.z - p.z) < 0.62) { hit = true; break; }
+      let dx = (p.x - tmp.x) * player.facing;           // positive = in front of the fist
+      if (dx > 0) dx = Math.max(0, dx - ahead);         // free reach in front
+      if (Math.hypot(dx, tmp.y - p.y, tmp.z - p.z) < r) { hit = true; break; }
     }
     if (hit) {
       a.hitDone = true;
