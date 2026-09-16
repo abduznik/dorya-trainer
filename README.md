@@ -16,7 +16,7 @@ with Three.js, cannon-es and Vite; exports to a static folder, Electron or Tauri
   where your presses land, so you can see whether you are early, late, or drifting.
 - Drilling **Mishima movement**: crouch dash, wavedash (f, n, d, d/f, f, n, d, d/f…), f,f dash,
   b,b backdash and the **Korean backdash** cancel (b, b, d/b), all on an endless stage.
-- **Timed drills**: ten electrics in a row, wavedash ×3 into electric, Korean backdash ×8, with best
+- **Timed drills**: ten electrics in a row, wavedash ×3 into electric, Korean backdash ×8 (b, b, d/b, b, d/b, b …), with best
   times saved per drill.
 - Practising on **keyboard, pad, stick or leverless**: every input is rebindable, directions come from
   d-pad or stick with 45° gates, and the on-screen input display works like the one in Tekken.

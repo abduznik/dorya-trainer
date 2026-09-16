@@ -60,8 +60,9 @@ export class Movement {
 
     // pressing f during a crouch dash cancels it (that is the wavedash)
     if (this.cdT > 0 && dir === 6) this.cdT = 0;
-    // Korean backdash: d/b cancels the backdash recovery so b,b can be input again
-    if (this.backT > 0 && this.backT < BACKDASH_FRAMES - 3 && dir === 1) { this.backT = 0; this.bTap = -99; }
+    // Korean backdash: d/b cancels the backdash, and the b that preceded it still counts as the
+    // first tap, so the very next b (d/b -> b) is already the second tap: b, b, d/b, b, d/b, b ...
+    if (this.backT > 0 && this.backT < BACKDASH_FRAMES - 2 && dir === 1) { this.backT = 0; this.bTap = this.frame; this.kbdCancel = true; }
 
     if (attacking) {
       this.state = 'attack';
