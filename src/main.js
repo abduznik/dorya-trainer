@@ -31,8 +31,9 @@ const $ = (id) => document.getElementById(id);
 const view = createScene(canvas);
 const physics = new Physics();
 
-const player = new ActiveRagdoll(physics, view.scene, { x: 0, facing: 1, tone: 0xe6e6ea, group: 2, mask: 1 | 4, hair: 'kazuya' });
-const dummy = new ActiveRagdoll(physics, view.scene, { x: 2.3, facing: -1, tone: 0x74747c, group: 4, mask: 1 | 2, hair: 'heihachi' });
+// fighters never physically collide with each other (like Tekken); a soft pushbox below keeps them apart
+const player = new ActiveRagdoll(physics, view.scene, { x: 0, facing: 1, tone: 0xe6e6ea, group: 2, mask: 1, hair: 'kazuya' });
+const dummy = new ActiveRagdoll(physics, view.scene, { x: 2.3, facing: -1, tone: 0x74747c, group: 4, mask: 1, hair: 'heihachi' });
 const fx = new Electric(view.scene);
 
 hud.onOptsChanged = () => hud.updateStats(stats, detector.opts.lateWindow);
@@ -265,6 +266,12 @@ function simTick() {
     player.applyForces();
     dummy.applyForces();
     physics.substep();
+  }
+
+  // pushbox: while both are on their feet, walking into the dummy shoves it along
+  if (!dummy.down && !player.down) {
+    const gap = (dummy.x - player.x) * player.facing;
+    if (gap < 0.7 && gap > -0.7) dummy.anchorX += (0.7 - gap) * player.facing * 0.5;
   }
 
   // dummy housekeeping: bring it back in front when it wandered off
