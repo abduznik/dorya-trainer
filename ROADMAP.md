@@ -9,10 +9,26 @@ Live: https://abduznik.github.io/dorya-trainer/ · Issues and milestones: https:
 - Active-ragdoll characters (no animation clips): stance, walk, crouch, attacks, launch, Tekken-style juggle with a loopable electric, knockdown and recovery.
 - Free training plus three timed drills, rebindable keyboard and controller, PS2-garage UI, GitHub Pages deploy.
 
+## Tutorials: a standing rule
+
+Every execution the trainer supports ships with a guided tutorial, not just a drill. New users should
+be able to learn the move from zero inside the app:
+
+- Stages that build the motion up piece by piece (for the electric: walk and crouch, f then neutral,
+  f, n, d, then the crouch dash, then 2 with an assist window that shrinks stage by stage until it is
+  the real just frame, then wavedash into electric).
+- Live input strip and plain-language feedback at every stage ("you skipped neutral", "2 was 3 frames
+  late"), N successes to unlock the next stage, and a final "graduate" drill.
+- The lesson lives in the move library file (Milestone 4), so adding a move without a lesson is a
+  lint error, not an option.
+
+The electric tutorial is the first item of Milestone 1 and sets the pattern.
+
 ## Milestone 1 – Feel and feedback
 
 Goal: the trainer tells you *why* an electric failed and feels crisp on every input device.
 
+- [ ] Tutorial mode for the electric (guided, staged, assist window that shrinks to the real just frame).
 - [ ] Per-input timeline strip after each attempt: which frame each direction and button landed on, with the just frame highlighted.
 - [ ] "Last 10 attempts" replay: scrub through inputs frame by frame.
 - [ ] Sound design pass: distinct EWGF / PEWGF / WGF / whiff cues, optional voice sample slot for dorya.mp3 (already wired).
@@ -56,8 +72,9 @@ execution drags EWGF assumptions deeper into the code.
       version", "buffered too early", "dropped the charge".
 - [ ] Generic feedback: the frame-offset histogram, timeline strip and drills work for any move in the
       grammar, not just button 2 relative to d/f.
-- [ ] Move library format (JSON) with a game, character, notation style (numpad vs Tekken), and a
-      "reference" section (source links, startup frames) shown in Help.
+- [ ] Move library format (JSON) with a game, character, notation style (numpad vs Tekken), a
+      "reference" section (source links, startup frames) shown in Help, and a "lesson" section
+      (tutorial stages and assist windows) consumed by a generic tutorial runner.
 
 ## Milestone 5 – Beyond the electric
 
@@ -74,8 +91,9 @@ the existing Tekken setup they reuse.
 4. Other games, timing-based: Smash (perfect wavedash, L-cancel), Melee-style frame-perfect inputs,
    using the same histogram feedback with a frame-window slider.
 
-Each new game ships as a move-library file plus, where needed, a display preset (numpad notation,
-button colours), so the app can present a "game select" on the start screen.
+Each new game ships as a move-library file with its lessons, plus, where needed, a display preset
+(numpad notation, button colours), so the app can present a "game select" on the start screen with a
+tutorial and drills per move.
 
 ## Milestone 6 – Platform and community
 
