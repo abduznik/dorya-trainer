@@ -81,6 +81,11 @@ npm run dist:win                     # portable build in release/
 
 Optional: drop a `public/sfx/dorya.mp3` into the project and it plays on every electric.
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for the milestones (feel and feedback, practice modes, authenticity, platform) and the
+[issue tracker](https://github.com/abduznik/dorya-trainer/issues) for the scoped work under each one.
+
 ## Keywords
 
 Tekken, Tekken 8, Tekken 7, electric wind god fist, EWGF, PEWGF, perfect electric, Kazuya Mishima,
