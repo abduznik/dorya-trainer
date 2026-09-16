@@ -160,6 +160,14 @@
       <h3>Stage</h3>
       <div class="row"><label>Player side</label>
         <select id="opt-side"><option value="left">Left (you face right)</option><option value="right">Right (you face left)</option></select></div>
+      <h3>Input device</h3>
+      <div class="row"><label>Use</label>
+        <select id="opt-device">
+          <option value="auto">Auto (keyboard wins while any key is held)</option>
+          <option value="keyboard">Keyboard only</option>
+          <option value="pad">Controller only</option>
+        </select></div>
+      <div class="row"><label>Stick dead zone (0.3 – 0.9)</label><input id="opt-deadzone" type="number" min="0.3" max="0.9" step="0.05"></div>
       <h3>Audio</h3>
       <div class="row"><label>Volume</label><input id="opt-volume" type="range" min="0" max="1" step="0.05"></div>
       <h3>Bindings <span class="hint">(click a cell, then press a key / button)</span></h3>

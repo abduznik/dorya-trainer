@@ -44,7 +44,8 @@ export function createScene(canvas) {
 
   // ---- mouse orbit (left drag) + wheel zoom ----
   let dragging = false, lx = 0, ly = 0;
-  canvas.addEventListener('mousedown', (e) => { if (e.button === 0) { dragging = true; lx = e.clientX; ly = e.clientY; } });
+  const menuOpen = () => !!document.querySelector('.modal:not([hidden])');
+  canvas.addEventListener('mousedown', (e) => { if (e.button === 0 && !menuOpen()) { dragging = true; lx = e.clientX; ly = e.clientY; } });
   window.addEventListener('mouseup', () => { dragging = false; });
   window.addEventListener('mousemove', (e) => {
     if (!dragging) return;
@@ -54,6 +55,7 @@ export function createScene(canvas) {
   });
   let zoomUser = 1;
   canvas.addEventListener('wheel', (e) => {
+    if (menuOpen()) return;
     e.preventDefault();
     zoomUser = Math.min(2.2, Math.max(0.5, zoomUser * (1 + Math.sign(e.deltaY) * 0.1)));
   }, { passive: false });

@@ -193,6 +193,15 @@ export function setupPanels({ input, detector, sfx, settings, hud }) {
   num('opt-down', 'downWindow', detector.opts);
   num('opt-late', 'lateWindow', detector.opts);
 
+  const device = $('opt-device');
+  device.value = settings.device || 'auto';
+  input.device = device.value;
+  device.onchange = () => { input.device = device.value; settings.device = device.value; persist(); device.blur(); };
+  const dz = $('opt-deadzone');
+  dz.value = settings.deadzone ?? 0.6;
+  input.stickDeadzone = parseFloat(dz.value);
+  dz.onchange = () => { const v = parseFloat(dz.value); if (!Number.isNaN(v)) { input.stickDeadzone = v; settings.deadzone = v; persist(); } dz.blur(); };
+
   const side = $('opt-side');
   side.value = settings.side || 'left';
   side.onchange = () => { settings.side = side.value; persist(); side.blur(); if (hud.onSideChanged) hud.onSideChanged(); };

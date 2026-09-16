@@ -47,6 +47,8 @@ export class InputManager {
     this.padName = '';
     this.capture = null;             // { kind: 'keys'|'pad', resolve }
     this.lastSource = 'keyboard';
+    this.device = 'auto';            // 'auto' | 'keyboard' | 'pad'
+    this.stickDeadzone = 0.6;        // analog stick magnitude before a direction registers
 
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
     window.addEventListener('keyup', (e) => this.keysDown.delete(e.code));
@@ -90,6 +92,7 @@ export class InputManager {
     const actions = this.actionsFor('keys', e.code);
     if (actions.length) e.preventDefault();
     if (e.repeat) return;
+    if (!actions.length) return; // only bound keys count as keyboard activity
     this.keysDown.add(e.code);
     for (const a of actions) if (PRESS_ACTIONS.includes(a)) this.pending.add(a);
     if (actions.length) this.lastSource = 'keyboard';
@@ -113,26 +116,39 @@ export class InputManager {
     for (const b of BUTTONS) if (k(b)) held[b] = true;
     if (dir !== 5) this.lastSource = 'keyboard';
 
+    // Device policy. 'auto': the keyboard wins whenever any bound key is held or was just
+    // pressed, and the pad is only read when the keyboard is completely idle, so a drifting
+    // stick can never override a keyboard motion (or its neutral step). 'keyboard' / 'pad'
+    // force one device.
+    const keyboardActive = this.keysDown.size > 0 || Object.values(pressed).some(Boolean);
+    const readPad = this.device === 'pad' || (this.device !== 'keyboard' && !keyboardActive);
+    if (this.device === 'pad') {
+      dir = 5;
+      for (const b of BUTTONS) held[b] = false;
+      for (const a of Object.keys(pressed)) pressed[a] = false;
+    }
+
     const gp = this.getGamepad();
     if (gp) {
-      const btn = (i) => { const b = gp.buttons[i]; return !!b && (b.pressed || b.value > 0.5); };
-      const p = (a) => this.bindings.pad[a].some(btn);
-      let pdir = dirFromDigital(p('up'), p('down'), p('left'), p('right'));
-      if (pdir === 5 && gp.axes.length >= 2) pdir = dirFromVector(gp.axes[0], -gp.axes[1], 0.45);
-      if (dir === 5 && pdir !== 5) { dir = pdir; this.lastSource = 'controller'; }
       const cur = gp.buttons.map((b) => b.pressed || b.value > 0.5);
-      for (let i = 0; i < cur.length; i++) {
-        if (cur[i] && !this.prevPad[i]) {
-          if (this.capture && this.capture.kind === 'pad') {
-            const cap = this.capture; this.capture = null; cap.resolve(i);
-          } else {
-            for (const a of this.actionsFor('pad', i)) if (PRESS_ACTIONS.includes(a)) pressed[a] = true;
-            this.lastSource = 'controller';
-          }
-        }
-      }
+      // rising edges are always tracked so nothing is double-counted when the pad becomes active
+      const rising = cur.map((v, i) => v && !this.prevPad[i]);
       this.prevPad = cur;
-      for (const b of BUTTONS) if (p(b)) held[b] = true;
+      if (this.capture && this.capture.kind === 'pad') {
+        const i = rising.findIndex(Boolean);
+        if (i >= 0) { const cap = this.capture; this.capture = null; cap.resolve(i); }
+      } else if (readPad) {
+        const p = (a) => this.bindings.pad[a].some((i) => cur[i]);
+        let pdir = dirFromDigital(p('up'), p('down'), p('left'), p('right'));
+        if (pdir === 5 && gp.axes.length >= 2) pdir = dirFromVector(gp.axes[0], -gp.axes[1], this.stickDeadzone);
+        if (pdir !== 5) { dir = pdir; this.lastSource = 'controller'; }
+        for (let i = 0; i < rising.length; i++) {
+          if (!rising[i]) continue;
+          for (const a of this.actionsFor('pad', i)) if (PRESS_ACTIONS.includes(a)) pressed[a] = true;
+          this.lastSource = 'controller';
+        }
+        for (const b of BUTTONS) if (p(b)) held[b] = true;
+      }
     }
 
     return { dir, held, pressed };
