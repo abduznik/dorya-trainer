@@ -24,11 +24,11 @@ const SEGS = [
   { name: 'rUpper', size: [0.16, 0.30, 0.16], pos: [0, 1.43, 0.36], mass: 2,   parent: 'chest',  joint: [0, 1.58, 0.36], cone: 3.0, twist: 1.0, gain: 2 },
   { name: 'rFore',  size: [0.15, 0.28, 0.15], pos: [0, 1.14, 0.36], mass: 1.5, parent: 'rUpper', joint: [0, 1.28, 0.36], cone: 2.5, twist: 0.4, gain: 2,
     extra: { size: [0.20, 0.20, 0.20], offset: [0, -0.22, 0] } },
-  { name: 'lThigh', size: [0.20, 0.40, 0.20], pos: [0, 0.69, -0.13], mass: 5, parent: 'hips',   joint: [0, 0.89, -0.13], cone: 2.2, twist: 0.4, gain: 2.5 },
-  { name: 'lShin',  size: [0.18, 0.40, 0.18], pos: [0, 0.29, -0.13], mass: 3, parent: 'lThigh', joint: [0, 0.49, -0.13], cone: 2.2, twist: 0.2, gain: 2,
+  { name: 'lThigh', size: [0.20, 0.40, 0.20], pos: [0, 0.69, -0.13], mass: 5, parent: 'hips',   joint: [0, 0.89, -0.13], cone: 2.2, twist: 1.6, gain: 2.5 },
+  { name: 'lShin',  size: [0.18, 0.40, 0.18], pos: [0, 0.29, -0.13], mass: 3, parent: 'lThigh', joint: [0, 0.49, -0.13], cone: 2.2, twist: 2.4, gain: 2,
     extra: { size: [0.28, 0.10, 0.20], offset: [0.05, -0.24, 0] } },
-  { name: 'rThigh', size: [0.20, 0.40, 0.20], pos: [0, 0.69, 0.13],  mass: 5, parent: 'hips',   joint: [0, 0.89, 0.13],  cone: 2.2, twist: 0.4, gain: 2.5 },
-  { name: 'rShin',  size: [0.18, 0.40, 0.18], pos: [0, 0.29, 0.13],  mass: 3, parent: 'rThigh', joint: [0, 0.49, 0.13],  cone: 2.2, twist: 0.2, gain: 2,
+  { name: 'rThigh', size: [0.20, 0.40, 0.20], pos: [0, 0.69, 0.13],  mass: 5, parent: 'hips',   joint: [0, 0.89, 0.13],  cone: 2.2, twist: 1.6, gain: 2.5 },
+  { name: 'rShin',  size: [0.18, 0.40, 0.18], pos: [0, 0.29, 0.13],  mass: 3, parent: 'rThigh', joint: [0, 0.49, 0.13],  cone: 2.2, twist: 2.4, gain: 2,
     extra: { size: [0.28, 0.10, 0.20], offset: [0.05, -0.24, 0] } },
 ];
 
@@ -100,6 +100,7 @@ export class ActiveRagdoll {
       this.bodies[s.name] = body;
       this.defs[s.name] = s;
       this.totalMass += s.mass;
+      this.fullMask = mask;
 
       // PD gains from the body's own inertia, capped so the explicit torque
       // integration at 1/120 s stays stable: w*dt <= ~0.4, and 2*zeta*w*dt <= ~0.5
@@ -330,16 +331,16 @@ export class ActiveRagdoll {
     T.rFore = eulerQ(0.25 + 0.3 * walk, 0, 0);
     T.lThigh = eulerQ(lerp(thighStandL, thighCrouch, c) + A * legL, 0, 0);
     T.rThigh = eulerQ(lerp(thighStandR, thighCrouch, c) + A * legR, 0, 0);
-    T.lShin = eulerQ(lerp(kneeStand, kneeCrouch, c) - 1.5 * liftL * (1 - c), 0, 0);
-    T.rShin = eulerQ(lerp(kneeStand, kneeCrouch, c) - 1.5 * liftR * (1 - c), 0, 0);
+    T.lShin = eulerQ(lerp(kneeStand, kneeCrouch, c) - 0.9 * liftL * (1 - c), 0, 0);
+    T.rShin = eulerQ(lerp(kneeStand, kneeCrouch, c) - 0.9 * liftR * (1 - c), 0, 0);
     this.hoverHeight = lerp(1.0, 0.60, c) + bob;
 
     // --- movement-state poses ---
     const st = this.moveState;
     if (st === 'cd') {
       // crouch dash: low lunge, front leg driving, back leg trailing, torso pitched forward
-      T.lThigh = eulerQ(1.35, 0, 0); T.lShin = eulerQ(-1.25, 0, 0);
-      T.rThigh = eulerQ(0.35, 0, 0); T.rShin = eulerQ(-1.9, 0, 0);
+      T.lThigh = eulerQ(1.3, 0, 0); T.lShin = eulerQ(-1.1, 0, 0);
+      T.rThigh = eulerQ(0.35, 0, 0); T.rShin = eulerQ(-1.75, 0, 0);
       T.chest = eulerQ(-0.75, 0, 0); T.head = eulerQ(0.55, 0, 0);
       T.lUpper = eulerQ(0.2, 0.25, 0); T.lFore = eulerQ(1.9, 0, 0);
       T.rUpper = eulerQ(-0.4, -0.25, 0); T.rFore = eulerQ(1.6, 0, 0);
@@ -400,6 +401,15 @@ export class ActiveRagdoll {
     const hips = this.bodies.hips;
     const M = this.totalMass;
     const alive = this.limp <= 0;
+    // While standing, the legs are owned entirely by their motors: they do not collide
+    // with the floor, so no contact can shove a foot sideways or lift the stance.
+    // Knocked down, everything collides again so the body can lie on the ground.
+    if (alive !== this.legsFree) {
+      this.legsFree = alive;
+      for (const n of ['lThigh', 'lShin', 'rThigh', 'rShin']) {
+        this.bodies[n].collisionFilterMask = alive ? (this.fullMask & ~1) : this.fullMask;
+      }
+    }
     const strength = alive ? this.weak : 0.04;
 
     if (alive) {
@@ -442,7 +452,11 @@ export class ActiveRagdoll {
       // every joint is motor-driven while the character is up: poses are crisp and
       // animation-like, but still bodies that collide, get shoved and go limp.
       const striking = this.motorLimbs && this.motorLimbs.includes(s.name);
-      this.motorTo(child, tw, striking ? 36 : 28, (striking ? 0.8 : 0.6) * Math.min(1, strength), parent, this.pivots[s.name]);
+      const leg = s.name.endsWith('Thigh') || s.name.endsWith('Shin');
+      // legs are the base of the stance, so they get the stiffest motors
+      const rate = striking ? 36 : leg ? 34 : 28;
+      const blend = striking ? 0.8 : leg ? 0.78 : 0.6;
+      this.motorTo(child, tw, rate, blend * Math.min(1, strength), parent, this.pivots[s.name]);
     }
   }
 
