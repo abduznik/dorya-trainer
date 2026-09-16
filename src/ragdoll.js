@@ -292,7 +292,7 @@ export class ActiveRagdoll {
       a.f++;
       if ((a.name === 'wgf' || a.name === 'ewgf') && a.f === 4) {
         // the lunge: hop forward and up
-        this.impulseAll(1.6 * this.facing, 2.2, 0); // short step forward; the reach comes from the hitbox
+        this.impulseAll(0, 2.2, 0); // the hop; the forward step is a velocity profile in applyForces
       }
       if (a.f >= a.def.total) this.attack = null;
     }
@@ -429,7 +429,12 @@ export class ActiveRagdoll {
       v.y += (vyT - v.y) * 0.7 * b;
       const lunging = this.attack && (this.attack.name === 'wgf' || this.attack.name === 'ewgf') && this.attack.f < 20;
       if (this.anchorX === undefined || lunging || this.weak < 1) this.anchorX = hips.position.x;
-      if (!lunging) {
+      if (lunging) {
+        // wind god fist step: a short, fixed push for the first 10 frames, then hold
+        const step = this.attack.f < 10 ? 2.2 * this.facing : 0;
+        v.x += (step - v.x) * 0.55;
+        this.anchorX = hips.position.x;
+      } else {
         // position-anchored root: no slow drift, and movement stops dead when input stops
         const vT = this.attack ? 0 : this.vTarget;
         this.anchorX += vT / 120;
