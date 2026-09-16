@@ -1,0 +1,33 @@
+{
+  "name": "dorya-trainer",
+  "version": "0.1.0",
+  "description": "Electric Wind God Fist just-frame trainer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "desktop": "electron .",
+    "dist:win": "npm run build && electron-builder --win --dir"
+  },
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.dorya.trainer",
+    "productName": "Dorya Trainer",
+    "files": [
+      "dist/**",
+      "electron/**"
+    ],
+    "directories": {
+      "output": "release"
+    }
+  }
+}

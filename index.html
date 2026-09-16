@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dorya Trainer</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="icon" type="image/png" sizes="64x64" href="./favicon.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta name="description" content="Electric Wind God Fist just-frame trainer with physics ragdolls.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="ui">
+    <!-- top left: stats -->
+    <section id="stats" class="panel">
+      <h1>DORYA TRAINER</h1>
+      <div class="statrow"><span>Attempts</span><b id="st-attempts">0</b></div>
+      <div class="statrow ewgf"><span>Electric (just frame)</span><b id="st-ewgf">0</b></div>
+      <div class="statrow ewgf"><span>of which Perfect (f,n,d/f+2)</span><b id="st-pewgf">0</b></div>
+      <div class="statrow wgf"><span>Regular WGF</span><b id="st-wgf">0</b></div>
+      <div class="statrow fail"><span>Failed motion</span><b id="st-fail">0</b></div>
+      <div class="statrow"><span>Electric rate</span><b id="st-rate">–</b></div>
+      <div class="statrow"><span>Streak / best</span><b><span id="st-streak">0</span> / <span id="st-best">0</span></b></div>
+      <div id="histo" title="Frame offset of button 2 relative to d/f (0 = electric)"></div>
+      <div class="hint">Input: <span id="src">keyboard</span> · <span id="padname">no controller</span></div>
+    </section>
+
+    <!-- drill progress -->
+    <section id="drill" class="panel" hidden>
+      <h1 id="drill-title">DRILL</h1>
+      <div id="drill-desc" class="hint"></div>
+      <div class="statrow"><span>Progress</span><b id="drill-progress">0 / 0</b></div>
+      <div class="statrow"><span>Time</span><b id="drill-time">0.0s</b></div>
+      <div class="statrow"><span>Best</span><b id="drill-best">–</b></div>
+    </section>
+
+    <!-- top right: buttons -->
+    <nav id="topright">
+      <button id="btn-menu" class="btn">Menu</button>
+      <button id="btn-resetpos" class="btn" title="R / Back button">Reset position</button>
+      <button id="btn-help" class="btn">Help</button>
+      <button id="btn-settings" class="btn">Settings</button>
+      <button id="btn-reset" class="btn">Reset stats</button>
+    </nav>
+
+    <!-- center: result flash -->
+    <div id="flash">
+      <div id="flash-main"></div>
+      <div id="flash-sub"></div>
+    </div>
+    <div id="announce"></div>
+
+    <!-- bottom left: input history -->
+    <section id="history" class="panel"><div id="hist-list"></div></section>
+
+    <!-- bottom center: motion progress -->
+    <div id="motion">
+      <span class="chip" data-step="1">f</span>
+      <span class="chip" data-step="2">n</span>
+      <span class="chip" data-step="3">d</span>
+      <span class="chip" data-step="4">d/f + 2</span>
+    </div>
+    <div id="mstate"></div>
+    <div id="keyhint"></div>
+
+    <!-- start screen -->
+    <section id="menu" class="modal menu">
+      <img class="logo-img" src="./logo.svg" alt="" width="150" height="150">
+      <h2 class="logo">DORYA<span>TRAINER</span></h2>
+      <p class="tag">Electric Wind God Fist · just-frame practice</p>
+      <div class="menu-list">
+        <button class="btn big" data-mode="free"><b>Free training</b><span>Endless stage, live input display, frame offsets</span></button>
+        <button class="btn big" data-mode="drill:electric10"><b>Drill: 10 electrics in a row</b><span>A regular WGF or a failed motion resets the streak</span></button>
+        <button class="btn big" data-mode="drill:wave5"><b>Drill: wavedash ×3 into electric</b><span>Link three crouch dashes, then land the electric. Five times.</span></button>
+        <button class="btn big" data-mode="drill:kbd"><b>Drill: Korean backdash ×8</b><span>b, b, d/b cancels. Eight linked backdashes.</span></button>
+      </div>
+      <p class="hint">Keyboard: WASD to move, <b>K is button 2</b> (J=1, L=3, ;=4) · Controller: d-pad / stick, <b>Triangle / Y is 2</b> · Mouse: camera only</p>
+      <p class="hint">Electric on keyboard: tap <b>D</b>, release, press <b>S</b>, then add <b>D</b> and hit <b>K</b> on the same instant.</p>
+    </section>
+
+    <!-- help panel -->
+    <section id="help" class="modal" hidden>
+      <h2>Electric Wind God Fist</h2>
+      <p>The EWGF is the Mishima launcher: <b>f, n, d, d/f+2</b>. It is "electric" only when button
+        <b>2</b> is pressed on the <b>exact same frame</b> that the stick reaches <b>d/f</b>. One frame late
+        and you get a regular Wind God Fist. The game runs at 60 frames per second, so the window is
+        16.7 ms. The move comes out in 11 frames, and the electric launches on hit.</p>
+      <h3>Notation (f is always toward the dummy)</h3>
+      <table>
+        <tr><td>f</td><td>forward</td><td>d</td><td>down (crouch)</td></tr>
+        <tr><td>n</td><td>neutral (nothing held)</td><td>d/f</td><td>down + forward together</td></tr>
+        <tr><td>1 / 2</td><td>left / right punch</td><td>3 / 4</td><td>left / right kick</td></tr>
+      </table>
+      <h3>Movement (endless stage)</h3>
+      <table>
+        <tr><td>hold f / b</td><td>walk</td><td>f, f</td><td>dash</td></tr>
+        <tr><td>b, b</td><td>backdash</td><td>b, b, d/b, b, b …</td><td>Korean backdash (d/b cancels the recovery)</td></tr>
+        <tr><td>hold d</td><td>crouch</td><td>f, n, d, d/f</td><td>crouch dash</td></tr>
+        <tr><td>CD, f, n, d, d/f …</td><td colspan="3">wavedash: tap f to cancel each crouch dash into the next</td></tr>
+      </table>
+      <p>2 on the d/f frame of any crouch dash is the electric. 2 later during the crouch dash is a regular WGF.</p>
+      <h3>Perfect Electric (PEWGF)</h3>
+      <p>The mist-step version: <b>f, n, d/f+2</b> with no d in between, 2 on the exact frame d/f is reached.
+        It is one input frame faster than the normal electric because there is no d frame to pass through,
+        which is what makes 1-frame links like ws2 into electric possible. If the 2 is late on this path you
+        simply get d/f+2, not a Wind God Fist. The trainer counts it as an electric and shows it separately.</p>
+      <h3>Default controls</h3>
+      <table>
+        <tr><th></th><th>Keyboard</th><th>Controller</th></tr>
+        <tr><td>Directions</td><td>WASD or arrows</td><td>D-pad or left stick</td></tr>
+        <tr><td>1 · 2</td><td>J · K</td><td>Square/X · Triangle/Y</td></tr>
+        <tr><td>3 · 4</td><td>L · ;</td><td>Cross/A · Circle/B</td></tr>
+        <tr><td>Reset position</td><td>R</td><td>Back / Select</td></tr>
+      </table>
+      <p>Mouse: drag to orbit the camera, wheel to zoom. It never triggers attacks.</p>
+      <p>Both characters are physics ragdolls with motorised joints. Nothing is animated: the punch is a
+        joint target, the launch is an impulse, and the dummy gets back up because its muscles switch on again.</p>
+      <p><button class="btn" data-close>Close</button> <span class="hint">(or press Esc)</span></p>
+    </section>
+
+    <!-- settings panel -->
+    <section id="settings" class="modal" hidden>
+      <h2>Settings</h2>
+      <h3>Timing windows (frames)</h3>
+      <div class="row"><label>Neutral before d (max)</label><input id="opt-neutral" type="number" min="1" max="60"></div>
+      <div class="row"><label>Down before d/f (max)</label><input id="opt-down" type="number" min="1" max="60"></div>
+      <div class="row"><label>Late 2 still counts as WGF (max)</label><input id="opt-late" type="number" min="0" max="30"></div>
+      <h3>Stage</h3>
+      <div class="row"><label>Player side</label>
+        <select id="opt-side"><option value="left">Left (you face right)</option><option value="right">Right (you face left)</option></select></div>
+      <h3>Audio</h3>
+      <div class="row"><label>Volume</label><input id="opt-volume" type="range" min="0" max="1" step="0.05"></div>
+      <h3>Bindings <span class="hint">(click a cell, then press a key / button)</span></h3>
+      <table id="bind-table">
+        <thead><tr><th>Action</th><th>Keyboard</th><th>Controller</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p>
+        <button class="btn" id="btn-defaults">Restore defaults</button>
+        <button class="btn" data-close>Close</button>
+      </p>
+    </section>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
