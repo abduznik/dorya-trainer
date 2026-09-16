@@ -1,4 +1,8 @@
+<p align="center"><img src="public/logo.svg" width="180" alt="Dorya Trainer logo: blocky arm throwing the electric wind god fist"></p>
+
 # Dorya Trainer
+
+**Play it: https://abduznik.github.io/dorya-trainer/**
 
 A just-frame trainer for the **Electric Wind God Fist** (f, n, d, d/f+2), built with
 Three.js, cannon-es and Vite. Runs in any browser and exports to a static folder,
