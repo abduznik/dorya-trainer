@@ -330,7 +330,7 @@ export class ActiveRagdoll {
     // stride phase advances with distance travelled (about a 0.7 m stride), backwards reverses it
     // stride phase advances with distance: a 0.4 rad swing on a 0.9 m leg is a 0.72 m step,
     // so one full cycle (two steps) is 1.44 m -> 2π / 1.44 / 60 = 0.073 rad per frame per m/s
-    if (Math.abs(this.moving) > 0.05) this.gait += this.moving * 0.073 * (this.moveState === 'dash' ? 1.3 : 1); // moving is relative to facing
+    if (Math.abs(this.moving) > 0.05) this.gait += this.moving * 0.073 * (this.moveState === 'dash' || this.moveState === 'run' ? 1.25 : 1); // moving is relative to facing
     else this.gait += (Math.round(this.gait / Math.PI) * Math.PI - this.gait) * 0.3; // settle feet together
     this.computeTargets();
   }
@@ -343,7 +343,7 @@ export class ActiveRagdoll {
     const phi = this.gait;
 
     // --- walk cycle: legs alternate, knee lifts during the swing, arms counter-swing ---
-    const A = (this.moveState === 'dash' ? 0.55 : 0.4) * walk;
+    const A = (this.moveState === 'dash' || this.moveState === 'run' ? 0.58 : 0.4) * walk;
     const legL = Math.sin(phi), legR = Math.sin(phi + Math.PI);
     const liftL = Math.max(0, Math.cos(phi)) * walk, liftR = Math.max(0, Math.cos(phi + Math.PI)) * walk;
     const bob = -Math.abs(Math.sin(phi)) * 0.05 * walk; // dips at mid-stride, weight visibly transfers
@@ -374,8 +374,10 @@ export class ActiveRagdoll {
       T.lUpper = eulerQ(0.2, 0.25, 0); T.lFore = eulerQ(1.9, 0, 0);
       T.rUpper = eulerQ(-0.4, -0.25, 0); T.rFore = eulerQ(1.6, 0, 0);
       this.hoverHeight = 0.62;
-    } else if (st === 'dash') {
-      T.chest = eulerQ(-0.32, 0, 0); T.head = eulerQ(0.25, 0, 0);
+    } else if (st === 'dash' || st === 'run') {
+      T.chest = eulerQ(st === 'run' ? -0.4 : -0.32, 0, 0); T.head = eulerQ(0.3, 0, 0);
+      // pumping arms while running
+      if (st === 'run') { T.lUpper = eulerQ(0.3 - 0.7 * legL, 0.2, 0); T.rUpper = eulerQ(0.3 - 0.7 * legR, -0.2, 0); T.lFore = eulerQ(1.4, 0, 0); T.rFore = eulerQ(1.4, 0, 0); }
       this.hoverHeight += -0.04;
     } else if (st === 'backdash') {
       // hop back: legs tucked together, torso leaning away

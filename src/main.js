@@ -171,7 +171,7 @@ dummy.on('juggleEnd', (hits) => { if (combo > 0) showCombo(Math.max(combo, hits)
 const MIRROR = { 1: 3, 2: 2, 3: 1, 4: 6, 5: 5, 6: 4, 7: 9, 8: 8, 9: 7 };
 
 // ---- 60 Hz simulation ------------------------------------------------------------
-const STATE_LABELS = { stand: '', walk: 'WALK', dash: 'DASH', backdash: 'BACKDASH', crouch: 'CROUCH', cd: 'CROUCH DASH', attack: '' };
+const STATE_LABELS = { stand: '', walk: 'WALK', dash: 'DASH', run: 'RUN', backdash: 'BACKDASH', crouch: 'CROUCH', cd: 'CROUCH DASH', attack: '' };
 let lastLabel = null;
 
 function simTick() {
@@ -214,7 +214,7 @@ function simTick() {
   player.control({
     vTarget: dx * 60 * player.facing,
     crouch: (ms === 'crouch' || ms === 'cd' || [1, 2, 3].includes(dir)) ? 1 : 0,
-    lean: ms === 'cd' ? 1.6 : ms === 'dash' ? 1 : ms === 'backdash' ? -1 : [6, 9].includes(dir) ? 0.4 : [4, 7].includes(dir) ? -0.3 : 0,
+    lean: ms === 'cd' ? 1.6 : ms === 'run' ? 1.2 : ms === 'dash' ? 1 : ms === 'backdash' ? -1 : [6, 9].includes(dir) ? 0.4 : [4, 7].includes(dir) ? -0.3 : 0,
     facing: player.facing,
     moving: dx * 60,
     blocking: !player.busy && (dir === 4 || dir === 1),
