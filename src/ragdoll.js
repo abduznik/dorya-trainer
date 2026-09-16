@@ -186,9 +186,9 @@ export class ActiveRagdoll {
       const grey = new THREE.MeshStandardMaterial({ color: 0xbfc2c6, roughness: 0.6 });
       // bald on top; side wings sweep up and out to a point
       for (const side of [-1, 1]) {
-        const base = tilted([-0.03, 0.08, 0.17 * side], 0.25, -0.55 * side);
+        const base = tilted([-0.03, 0.08, 0.17 * side], 0.25, 0.6 * side);   // flare outward
         addBox(base, [0.22, 0.30, 0.07], [0, 0.15, 0], grey);
-        const tip = tilted([0, 0.30, 0], 0.1, -0.35 * side);
+        const tip = tilted([0, 0.30, 0], 0.1, 0.4 * side);
         base.add(tip);
         addBox(tip, [0.12, 0.16, 0.05], [0, 0.08, 0], grey);
       }
